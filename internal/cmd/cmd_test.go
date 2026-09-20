@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"memex/internal/cmd"
+	"mini-me/internal/cmd"
 )
 
 func TestVersionCmd(t *testing.T) {

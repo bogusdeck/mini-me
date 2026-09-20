@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"memex/internal/config"
+	"mini-me/internal/config"
 )
 
 func TestDBPathEnvOverride(t *testing.T) {
-	expectedPath := "/custom/path/memex.db"
+	expectedPath := "/custom/path/mini-me.db"
 	t.Setenv(config.EnvDBPath, expectedPath)
 
 	path, err := config.DBPath()
@@ -34,7 +34,7 @@ func TestDBPathDefault(t *testing.T) {
 
 func TestEnsureDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	targetDir := filepath.Join(tmpDir, "sub", "memex")
+	targetDir := filepath.Join(tmpDir, "sub", "mini-me")
 
 	err := config.EnsureDir(targetDir)
 	if err != nil {

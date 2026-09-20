@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	DirName  = "memex"
-	DBName   = "memex.db"
-	EnvDBPath = "MEMEX_DB_PATH"
+	DirName   = "mini-me"
+	DBName    = "mini-me.db"
+	EnvDBPath = "MINI_ME_DB_PATH"
 )
 
-// DefaultConfigDir returns the base configuration directory for memex.
-// It uses os.UserConfigDir()/memex unless overridden.
+// DefaultConfigDir returns the base configuration directory for mini-me.
+// It uses os.UserConfigDir()/mini-me unless overridden.
 func DefaultConfigDir() (string, error) {
 	userConfig, err := os.UserConfigDir()
 	if err != nil {
@@ -22,9 +22,9 @@ func DefaultConfigDir() (string, error) {
 	return filepath.Join(userConfig, DirName), nil
 }
 
-// DBPath returns the path to memex.db.
-// If MEMEX_DB_PATH environment variable is set, it takes precedence.
-// Otherwise, it returns os.UserConfigDir()/memex/memex.db.
+// DBPath returns the path to mini-me.db.
+// If MINI_ME_DB_PATH environment variable is set, it takes precedence.
+// Otherwise, it returns os.UserConfigDir()/mini-me/mini-me.db.
 func DBPath() (string, error) {
 	if envPath := os.Getenv(EnvDBPath); envPath != "" {
 		return envPath, nil

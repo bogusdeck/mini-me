@@ -1,6 +1,6 @@
-# Memex Architecture & Design Document
+# mini-me Architecture & Design Document
 
-`memex` is a local-first, single-user personal knowledge base for macOS (and Linux) stored in a single SQLite database file. It provides local CLI tools, HTTP APIs, and an Model Context Protocol (MCP) server to allow personal tools and projects (like NeuralForm) to query structured profile data, projects, entities, facts, and searchable notes with zero telemetry or cloud dependencies.
+`mini-me` is a local-first, single-user personal knowledge base for macOS (and Linux) stored in a single SQLite database file. It provides local CLI tools, HTTP APIs, and a Model Context Protocol (MCP) server to allow personal tools and projects (like NeuralForm) to query structured profile data, projects, entities, facts, and searchable notes with zero telemetry or cloud dependencies.
 
 ---
 
@@ -25,8 +25,8 @@
                    |
                    v
 +-------------------------------------------------------------------------+
-|                       SQLite Database (memex.db)                        |
-|  - File: os.UserConfigDir()/memex/memex.db                              |
+|                      SQLite Database (mini-me.db)                       |
+|  - File: os.UserConfigDir()/mini-me/mini-me.db                          |
 |  - Mode: WAL mode, permissions 0600                                     |
 |  - Driver: github.com/ncruces/go-sqlite3 (No CGO)                        |
 |  - Vector Search: vec0 (sqlite-vec)                                     |
@@ -35,7 +35,7 @@
 ```
 
 ### Key Principles & Constraints
-1. **Local-First & Offline**: All state lives in `$HOME/.config/memex/memex.db` (or OS equivalent). No remote HTTP calls except to local Ollama (`http://127.0.0.1:11434`).
+1. **Local-First & Offline**: All state lives in `$HOME/.config/mini-me/mini-me.db` (or OS equivalent). No remote HTTP calls except to local Ollama (`http://127.0.0.1:11434`).
 2. **CGO-Free SQLite**: Powered by `github.com/ncruces/go-sqlite3` compiled to WebAssembly with `sqlite-vec` extension (`github.com/asg017/sqlite-vec-go-bindings/ncruces`).
 3. **Single File Database**: File permissions set strictly to `0600` (directory `0700`).
 
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS field (
 
 ## 3. Data Flow & Core Subsystems
 
-### Ingestion Pipeline (`memex add`, `memex reindex`)
+### Ingestion Pipeline (`mini-me add`, `mini-me reindex`)
 1. **File Walk & Filtering**:
    - Check `.gitignore` rules.
    - Apply denylist: `.ssh`, `.aws`, `.env*`, `node_modules`, build directories (`dist`, `build`, `target`), binaries, and files > size cap (e.g. 2MB).
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS field (
    - Slice 768 dims -> first 256 dims -> L2-normalize.
    - Store float vector in `chunk_vec`.
 
-### Search Pipeline (`memex search`)
+### Search Pipeline (`mini-me search`)
 1. **Query Processing**:
    - Prefix search query string with `search_query: `.
    - Compute query vector via Ollama embeddings (256d L2 normalized).
@@ -162,18 +162,18 @@ CREATE TABLE IF NOT EXISTS field (
    - For each top result chunk, check if source file exists on disk and matches SHA-256 hash.
    - If missing or modified: drop result from response and flag file path for background/subsequent reindexing.
 
-### Fact & Profile Engine (`memex init`, `fact`, `profile`)
-- **Interactive Interview (`memex init`)**: Populates `field` table and creates initial `entity` + `confirmed` facts.
-- **Review Queue (`memex review`)**: Holds facts proposed by external tools (e.g. via MCP). Facts default to `status = 'proposed'`.
-- **Profile Generation (`memex profile`)**: Synthesizes profile card markdown (<= ~1500 tokens) using deterministic field mappings + confirmed facts + active projects.
+### Fact & Profile Engine (`mini-me init`, `fact`, `profile`)
+- **Interactive Interview (`mini-me init`)**: Populates `field` table and creates initial `entity` + `confirmed` facts.
+- **Review Queue (`mini-me review`)**: Holds facts proposed by external tools (e.g. via MCP). Facts default to `status = 'proposed'`.
+- **Profile Generation (`mini-me profile`)**: Synthesizes profile card markdown (<= ~1500 tokens) using deterministic field mappings + confirmed facts + active projects.
 - **Sensitivity Rules**: `never_infer` facts can only be added manually by the user. Government IDs and payment card details are strictly prohibited from being persisted.
 
-### Serving & Integrations (`memex serve`, `memex mcp`)
-- **HTTP Server (`memex serve`)**:
+### Serving & Integrations (`mini-me serve`, `mini-me mcp`)
+- **HTTP Server (`mini-me serve`)**:
   - Bound exclusively to `127.0.0.1` (localhost).
-  - Authenticated via bearer token stored in `$HOME/.config/memex/auth_token` (mode `0600`).
+  - Authenticated via bearer token stored in `$HOME/.config/mini-me/auth_token` (mode `0600`).
   - Strict endpoint contracts: `/v1/profile`, `/v1/profile/field`, `/v1/entity`, `/v1/search`.
-- **MCP Server (`memex mcp`)**:
+- **MCP Server (`mini-me mcp`)**:
   - Stdio transport for Model Context Protocol.
   - Read-only tools: `get_profile`, `get_person`, `get_project`, `search`.
   - Proposal tool: `propose_fact` writes only to the review queue as `status='proposed'`.
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS field (
 
 | Failure Mode | Impact | Mitigation Strategy |
 |--------------|--------|---------------------|
-| Ollama Unavailable / Model Not Pulled | Embeddings fail during ingestion or search | `memex doctor` detects status and prints pull instructions. Ingestion fails gracefully; search can fall back to pure FTS5 keyword search. |
+| Ollama Unavailable / Model Not Pulled | Embeddings fail during ingestion or search | `mini-me doctor` detects status and prints pull instructions. Ingestion fails gracefully; search can fall back to pure FTS5 keyword search. |
 | Database Corruption / Lock contention | Data loss or process block | SQLite WAL mode enabled, single-writer multi-reader concurrency, bounded timeouts. |
 | Stale Search Index | Outdated search results pointing to deleted/edited files | Pre-search staleness check verifies source file presence and SHA-256 hash. Triggers reindex on mismatch. |
 | Secret Leakage in Notes | Secrets sent to Ollama or stored in plain DB | Pre-embedding regex and entropy secret scanner skips or redacts sensitive keys prior to chunk creation. |

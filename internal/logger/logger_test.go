@@ -3,7 +3,7 @@ package logger_test
 import (
 	"testing"
 
-	"memex/internal/logger"
+	"mini-me/internal/logger"
 )
 
 func TestLoggerInit(t *testing.T) {
