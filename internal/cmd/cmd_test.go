@@ -66,9 +66,9 @@ func TestDoctorCmd(t *testing.T) {
 	}
 }
 
-func TestAddAndReindexCmd(t *testing.T) {
+func TestAddSearchReindexCmd(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "cmd_ingest_test.db")
+	dbPath := filepath.Join(tmpDir, "cmd_search_test.db")
 	t.Setenv(config.EnvDBPath, dbPath)
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -85,11 +85,11 @@ func TestAddAndReindexCmd(t *testing.T) {
 	t.Setenv("OLLAMA_HOST", server.URL)
 
 	sampleFile := filepath.Join(tmpDir, "sample.md")
-	if err := os.WriteFile(sampleFile, []byte("# Test Note\nThis is sample content for testing add command."), 0644); err != nil {
+	if err := os.WriteFile(sampleFile, []byte("# Test Note\nThis is sample content for testing add and search commands."), 0644); err != nil {
 		t.Fatalf("failed creating sample file: %v", err)
 	}
 
-	// Test add
+	// 1. Test add
 	buf := new(bytes.Buffer)
 	cmd.RootCmd.SetOut(buf)
 	cmd.RootCmd.SetArgs([]string{"add", sampleFile, "--project", "test-project"})
@@ -98,7 +98,14 @@ func TestAddAndReindexCmd(t *testing.T) {
 		t.Fatalf("add command failed: %v", err)
 	}
 
-	// Test reindex
+	// 2. Test search
+	buf.Reset()
+	cmd.RootCmd.SetArgs([]string{"search", "sample content", "--project", "test-project", "-k", "5"})
+	if err := cmd.RootCmd.Execute(); err != nil {
+		t.Fatalf("search command failed: %v", err)
+	}
+
+	// 3. Test reindex
 	buf.Reset()
 	cmd.RootCmd.SetArgs([]string{"reindex"})
 	if err := cmd.RootCmd.Execute(); err != nil {
