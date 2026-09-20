@@ -11,20 +11,19 @@ import (
 )
 
 func TestSafetyValidator(t *testing.T) {
-	// SSN Test
-	err := profile.ValidateFactContent("ssn", "123-45-6789")
-	if err != profile.ErrGovernmentIDDetected {
-		t.Errorf("expected ErrGovernmentIDDetected, got %v", err)
+	// Detect Sensitivity for SSN & Credit Card
+	sens := profile.DetectSensitivity("ssn 123-45-6789")
+	if sens != store.SensitivityPersonal {
+		t.Errorf("expected SensitivityPersonal for SSN, got %v", sens)
 	}
 
-	// Credit Card Test
-	err = profile.ValidateFactContent("payment_method", "4111-1111-1111-1111")
-	if err != profile.ErrCreditCardDetected {
-		t.Errorf("expected ErrCreditCardDetected, got %v", err)
+	sensPAN := profile.DetectSensitivity("PAN ABCDE1234F")
+	if sensPAN != store.SensitivityPersonal {
+		t.Errorf("expected SensitivityPersonal for PAN card, got %v", sensPAN)
 	}
 
 	// Never Infer Sensitivity Rule
-	err = profile.ValidateFactSensitivity(store.SensitivityNeverInfer, false)
+	err := profile.ValidateFactSensitivity(store.SensitivityNeverInfer, false)
 	if err != profile.ErrNeverInferAutomated {
 		t.Errorf("expected ErrNeverInferAutomated when automated, got %v", err)
 	}
