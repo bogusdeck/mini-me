@@ -1,0 +1,13 @@
+# Binaries
+memex
+*.exe
+*.exe.test
+*.out
+
+# Go
+vendor/
+
+# IDE & OS
+.DS_Store
+.idea/
+.vscode/
