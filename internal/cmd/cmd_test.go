@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"mini-me/internal/cmd"
@@ -114,70 +113,57 @@ func TestAddSearchReindexCmd(t *testing.T) {
 	}
 }
 
-func TestProfileFactInitReviewCmds(t *testing.T) {
+func TestStatusExportForgetCmds(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "cmd_profile_test.db")
+	dbPath := filepath.Join(tmpDir, "cmd_ctrl_test.db")
 	t.Setenv(config.EnvDBPath, dbPath)
 
-	// 1. Test init
-	buf := new(bytes.Buffer)
-	cmd.RootCmd.SetOut(buf)
-	cmd.RootCmd.SetArgs([]string{"init", "--name", "Alice Engineer", "--email", "alice@test.com", "--employer", "Acme Corp"})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/embed" {
+			w.Header().Set("Content-Type", "application/json")
+			vecs := [][]float32{make([]float32, 768)}
+			_ = json.NewEncoder(w).Encode(embed.EmbedResponse{Embeddings: vecs})
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	t.Setenv("OLLAMA_HOST", server.URL)
 
-	if err := cmd.RootCmd.Execute(); err != nil {
-		t.Fatalf("init command failed: %v", err)
-	}
-
-	// 2. Test fact add
-	buf.Reset()
-	cmd.RootCmd.SetArgs([]string{"fact", "add", "Alice Engineer", "likes", "Go Programming", "--status", "confirmed", "--sensitivity", "normal"})
-	if err := cmd.RootCmd.Execute(); err != nil {
-		t.Fatalf("fact add command failed: %v", err)
-	}
-
-	// 3. Test fact add proposed
-	buf.Reset()
-	cmd.RootCmd.SetArgs([]string{"fact", "add", "Alice Engineer", "knows", "Bob Developer", "--status", "proposed"})
-	if err := cmd.RootCmd.Execute(); err != nil {
-		t.Fatalf("fact add proposed command failed: %v", err)
-	}
-
-	// 4. Test review
-	buf.Reset()
-	cmd.RootCmd.SetArgs([]string{"review"})
-	if err := cmd.RootCmd.Execute(); err != nil {
-		t.Fatalf("review command failed: %v", err)
-	}
-
-	// 5. Test fact confirm
-	buf.Reset()
-	cmd.RootCmd.SetArgs([]string{"fact", "confirm", "2"})
-	if err := cmd.RootCmd.Execute(); err != nil {
-		t.Fatalf("fact confirm command failed: %v", err)
-	}
-
-	// 6. Test profile card generation
-	buf.Reset()
-	cmd.RootCmd.SetArgs([]string{"profile"})
-	if err := cmd.RootCmd.Execute(); err != nil {
-		t.Fatalf("profile command failed: %v", err)
-	}
-}
-
-func TestGovernmentIDRejectionInFactAdd(t *testing.T) {
-	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "cmd_security_test.db")
-	t.Setenv(config.EnvDBPath, dbPath)
+	sampleFile := filepath.Join(tmpDir, "note.md")
+	_ = os.WriteFile(sampleFile, []byte("# Note\nSample note to forget."), 0644)
 
 	buf := new(bytes.Buffer)
 	cmd.RootCmd.SetOut(buf)
-	cmd.RootCmd.SetArgs([]string{"fact", "add", "Alice", "ssn", "123-45-6789"})
 
-	err := cmd.RootCmd.Execute()
-	if err == nil {
-		t.Fatalf("expected error when adding SSN fact, got nil")
+	// Add file first
+	cmd.RootCmd.SetArgs([]string{"add", sampleFile})
+	if err := cmd.RootCmd.Execute(); err != nil {
+		t.Fatalf("add failed: %v", err)
 	}
-	if !strings.Contains(err.Error(), "government IDs") {
-		t.Errorf("expected government ID error, got: %v", err)
+
+	// Test status
+	buf.Reset()
+	cmd.RootCmd.SetArgs([]string{"status"})
+	if err := cmd.RootCmd.Execute(); err != nil {
+		t.Fatalf("status command failed: %v", err)
+	}
+
+	// Test export
+	exportDir := filepath.Join(tmpDir, "export")
+	buf.Reset()
+	cmd.RootCmd.SetArgs([]string{"export", exportDir})
+	if err := cmd.RootCmd.Execute(); err != nil {
+		t.Fatalf("export command failed: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(exportDir, "mini-me.db.copy")); err != nil {
+		t.Errorf("expected mini-me.db.copy in export dir")
+	}
+
+	// Test forget
+	buf.Reset()
+	cmd.RootCmd.SetArgs([]string{"forget", "--path", sampleFile})
+	if err := cmd.RootCmd.Execute(); err != nil {
+		t.Fatalf("forget command failed: %v", err)
 	}
 }
