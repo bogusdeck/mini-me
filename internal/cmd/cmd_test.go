@@ -66,6 +66,16 @@ func TestDoctorCmd(t *testing.T) {
 	}
 }
 
+func TestServiceCmdStatus(t *testing.T) {
+	buf := new(bytes.Buffer)
+	cmd.RootCmd.SetOut(buf)
+	cmd.RootCmd.SetArgs([]string{"service", "status"})
+
+	if err := cmd.RootCmd.Execute(); err != nil {
+		t.Fatalf("service status command failed: %v", err)
+	}
+}
+
 func TestAddSearchReindexCmd(t *testing.T) {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "cmd_search_test.db")

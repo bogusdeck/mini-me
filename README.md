@@ -78,14 +78,34 @@ Add facts to your knowledge graph or review proposed facts:
 ./mini-me review
 ```
 
-### 6. Serve REST API & MCP Server
-Start the local HTTP API:
+### 6. Serve REST API & Background Service
+Start the local HTTP API manually:
 ```bash
 ./mini-me serve --port 8080
 ```
-Or run the stdio MCP server for Playwright/LLM tools:
+
+Or run `mini-me` as a background service (runs automatically on login):
+
+**Option A: Built-in macOS Service Manager**
 ```bash
-./mini-me mcp
+# Install and start background service
+mini-me service install
+
+# Check service status
+mini-me service status
+
+# Stop or uninstall service
+mini-me service stop
+mini-me service uninstall
+```
+
+**Option B: Homebrew Services**
+```bash
+# Start via Homebrew Services
+brew services start mini-me
+
+# Check Homebrew service status
+brew services list
 ```
 
 ### 7. Controls & Data Export
