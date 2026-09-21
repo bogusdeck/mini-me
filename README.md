@@ -52,6 +52,14 @@ go install github.com/bogusdeck/mini-me/cmd/mini-me@latest
 
 ---
 
+## 🔌 Integration Guide (AI Agents & Developers)
+
+Looking to integrate `mini-me` into your AI tools or custom projects? Check out the **[Integration Guide](docs/INTEGRATION.md)** for:
+- 🤖 **AI Agents & MCP Clients** (Claude Desktop, Cursor IDE, Antigravity CLI, VS Code)
+- 💻 **Application Developers** (Python, TypeScript/Node.js, Go, cURL REST API examples)
+
+---
+
 ## ⚡ Quickstart
 
 ### 1. Run System Health Check
