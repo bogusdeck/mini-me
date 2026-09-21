@@ -25,15 +25,27 @@ Every developer and power user faces **context fragmentation**:
 
 ### Homebrew (macOS)
 ```bash
-# Tap repository & install
 brew tap bogusdeck/mini-me https://github.com/bogusdeck/mini-me.git
 brew install bogusdeck/mini-me/mini-me
-
-# Start background service
 brew services start mini-me
 ```
 
-### Go Install
+### Debian / Ubuntu (`apt-get`)
+```bash
+# Build and install .deb package
+make deb
+sudo apt-get install ./dist/mini-me_0.1.0_amd64.deb
+```
+
+### Arch Linux (`pacman`)
+```bash
+# Install via PKGBUILD
+git clone https://github.com/bogusdeck/mini-me.git
+cd mini-me
+makepkg -si
+```
+
+### Go Install (Cross-platform)
 ```bash
 go install github.com/bogusdeck/mini-me/cmd/mini-me@latest
 ```
@@ -72,11 +84,11 @@ mini-me search "recent projects and resume details"
 ```
 
 ### 5. Run as Background Service
+Cross-platform service management (launchd on macOS, systemd on Linux):
 ```bash
-# Manage native launchd service on macOS
-mini-me service install
-mini-me service start
-mini-me service status
+mini-me service install   # Installs & starts user service (launchd / systemd)
+mini-me service status    # Checks status
+mini-me service stop      # Stops service
 ```
 
 ---
@@ -84,7 +96,7 @@ mini-me service status
 ## 🔒 Security & Privacy
 
 - **Zero CGO / Pure Go**: Powered by WebAssembly SQLite (`ncruces/go-sqlite3`) + `sqlite-vec`.
-- **Local Storage Only**: Database stored at `~/Library/Application Support/mini-me/mini-me.db` with strict `0600` permissions.
+- **Local Storage Only**: Database stored at `~/Library/Application Support/mini-me/mini-me.db` (or `~/.config/mini-me/mini-me.db` on Linux) with strict `0600` permissions.
 - **Secret Redaction**: Pre-indexing regex and entropy scanners purge API tokens, SSH keys, and sensitive patterns.
 - **Local Embeddings**: Integrates with local [Ollama](https://ollama.com) (`nomic-embed-text`) at `http://127.0.0.1:11434`.
 
