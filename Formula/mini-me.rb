@@ -1,7 +1,9 @@
 class MiniMe < Formula
-  desc "Local-first personal knowledge base for macOS"
+  desc "Local-first, single-user personal knowledge base for macOS"
   homepage "https://github.com/bogusdeck/mini-me"
-  url "file://#{Dir.pwd}"
+  url "https://github.com/bogusdeck/mini-me/archive/refs/tags/v0.1.0.tar.gz"
+  sha256 "da9d4914fc9333a6b097df87eb8d58c4d16c42a91a1d5512ec01975a6a36fa0c"
+  head "https://github.com/bogusdeck/mini-me.git", branch: "main"
   version "0.1.0"
 
   depends_on "go" => :build
