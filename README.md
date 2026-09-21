@@ -1,128 +1,95 @@
-# mini-me
+# mini-me 🧠
 
-`mini-me` is a local-first, single-user personal knowledge base for macOS (and Linux) stored in a single SQLite file. It provides local CLI tools, an HTTP API, and a Model Context Protocol (MCP) server to allow personal tools and projects (like NeuralForm) to query structured profile data, active projects, people graphs, and searchable notes.
+> **Your privacy-first, local-first digital twin and RAG context engine.**
 
----
-
-## Key Features
-
-- **Local-First & CGO-Free**: Powered by `github.com/ncruces/go-sqlite3` compiled to WebAssembly with `sqlite-vec` extension (`github.com/asg017/sqlite-vec-go-bindings/ncruces`). No CGO, no Docker, no external database server.
-- **Single Database File**: State is stored in a single SQLite database file at `os.UserConfigDir()/mini-me/mini-me.db` with WAL mode and `0600` file permissions.
-- **Local Embeddings**: Integrates with local Ollama (`http://127.0.0.1:11434`, model `nomic-embed-text`). Slices 768-dimensional embeddings to 256 dimensions and applies L2 normalization.
-- **Heading-Aware Markdown Chunker**: Automatically preserves Markdown heading breadcrumbs (`# Title > ## Section`) for context-rich retrieval.
-- **Hybrid Search**: Combines `sqlite-vec` (KNN vector search) and `FTS5` (BM25 keyword search) fused via Reciprocal Rank Fusion (RRF). Validates file content freshness before returning hits.
-- **Deterministic Profile & Knowledge Graph**: Identity fields, entities (people, orgs, projects, topics, places), facts graph with sensitivity rules (`normal`, `personal`, `never_infer`), and zero-LLM deterministic profile card generation.
-- **Security Safeguards**: Embedded secret scanner (regex + Shannon entropy) redacting tokens/keys before embedding. Strict hard rule preventing storage of SSNs or credit card numbers.
-- **Serving Interfaces**:
-  - `mini-me serve`: Localhost-only HTTP REST API (`127.0.0.1`) authenticated via a `0600` permissions bearer token.
-  - `mini-me mcp`: Stdio Model Context Protocol (MCP) server with untrusted data labeling (`[UNTRUSTED RETRIEVED DATA]`) and proposed-fact review queue support.
+`mini-me` scans your browser history, documents, resumes, and local projects to build a secure, searchable personal knowledge graph—giving local LLMs and AI assistants deep context about **who you are, what you build, and what you know**, without sending a single byte to the cloud.
 
 ---
 
-## Installation
+## 🎯 Why `mini-me`? (The Problem)
 
-### Prerequisites
-- Go 1.22 or higher
-- [Ollama](https://ollama.com) installed and running locally (`ollama pull nomic-embed-text`)
+Every developer and power user faces **context fragmentation**:
+- Your personal context lives scattered across browser history, local notes, project repositories, resumes, and system files.
+- Cloud-based AI assistants require you to trade away total privacy, uploading your entire life's digital footprint, work, and history to third-party cloud servers.
+- Local LLMs and AI coding assistants start with zero knowledge about your background, active projects, past solutions, or preferred tools.
 
-### Install from Source
-```bash
-git clone https://github.com/bogusdeck/mini-me.git
-cd mini-me
-go build -o mini-me ./cmd/mini-me
-```
+### The Solution
+`mini-me` acts as a **local-first digital twin**:
+1. **Automatic Ingestion**: Scans local browser cache/history (Chrome, Brave, Safari), resumes, project repositories, and notes.
+2. **Privacy by Design**: Runs 100% locally on your machine. Includes automated secret redaction and strict PII safety rules (never stores raw SSNs or financial credentials).
+3. **Hybrid RAG & MCP Engine**: Exposes hybrid vector search (KNN + BM25 FTS5) via a local HTTP REST API and a Model Context Protocol (MCP) server so your local LLM or AI assistant can query your context seamlessly.
 
 ---
 
-## Quickstart Guide
+## 🚀 Quick Install
 
-### 1. System Health Diagnostics
-Verify SQLite accessibility, Ollama connectivity, and model availability:
+### Homebrew (macOS)
 ```bash
-./mini-me doctor
-```
+# Tap repository & install
+brew tap bogusdeck/mini-me https://github.com/bogusdeck/mini-me.git
+brew install bogusdeck/mini-me/mini-me
 
-### 2. Profile Setup Interview
-Run the onboarding interview to populate your identity fields:
-```bash
-./mini-me init --name "Alice Engineer" --email "alice@example.com" --employer "Acme Corp"
-```
-
-Generate and view your deterministic Profile Card anytime:
-```bash
-./mini-me profile
-```
-
-### 3. Add Notes & Ingest Markdown Files
-Recursively chunk, secret-scan, embed, and index markdown notes or directories:
-```bash
-./mini-me add docs/ --project "my-project"
-```
-
-### 4. Hybrid Search
-Search notes using hybrid vector KNN + FTS5 BM25 with RRF ranking:
-```bash
-./mini-me search "database schema" --project "my-project" -k 5
-```
-
-### 5. Knowledge Graph Facts & Review Queue
-Add facts to your knowledge graph or review proposed facts:
-```bash
-# Add a confirmed fact
-./mini-me fact add "Alice Engineer" "likes" "Go Architecture"
-
-# List facts
-./mini-me fact list
-
-# Review proposed facts queue (e.g. from MCP tools)
-./mini-me review
-```
-
-### 6. Serve REST API & Background Service
-Start the local HTTP API manually:
-```bash
-./mini-me serve --port 8080
-```
-
-Or run `mini-me` as a background service (runs automatically on login):
-
-**Option A: Built-in macOS Service Manager**
-```bash
-# Install and start background service
-mini-me service install
-
-# Check service status
-mini-me service status
-
-# Stop or uninstall service
-mini-me service stop
-mini-me service uninstall
-```
-
-**Option B: Homebrew Services**
-```bash
-# Start via Homebrew Services
+# Start background service
 brew services start mini-me
-
-# Check Homebrew service status
-brew services list
 ```
 
-### 7. Controls & Data Export
-Inspect status, export all data, or purge specific paths:
+### Go Install
 ```bash
-# View statistics
-./mini-me status
-
-# Export backup copy, profile card, facts JSON, and chunks JSONL
-./mini-me export ./export_backup/
-
-# Purge chunks by file path
-./mini-me forget --path docs/DESIGN.md
+go install github.com/bogusdeck/mini-me/cmd/mini-me@latest
 ```
 
 ---
 
-## License
+## ⚡ Quickstart
+
+### 1. Run System Health Check
+Verify SQLite Wasm engine and local Ollama embedding model (`nomic-embed-text`):
+```bash
+mini-me doctor
+```
+
+### 2. Set Up Your Profile
+Initialize your core profile card:
+```bash
+mini-me init --name "Your Name" --email "you@example.com" --employer "Your Company"
+mini-me profile
+```
+
+### 3. Scan Your Data
+Scan browser history and ingest local files or project directories:
+```bash
+# Scan browser history (Chrome, Brave, Safari)
+mini-me scan browser
+
+# Ingest documents, resumes, or project directories
+mini-me scan docs ~/Documents ~/Projects
+```
+
+### 4. Query Your Digital Twin
+Perform hybrid search across your indexed context:
+```bash
+mini-me search "recent projects and resume details"
+```
+
+### 5. Run as Background Service
+```bash
+# Manage native launchd service on macOS
+mini-me service install
+mini-me service start
+mini-me service status
+```
+
+---
+
+## 🔒 Security & Privacy
+
+- **Zero CGO / Pure Go**: Powered by WebAssembly SQLite (`ncruces/go-sqlite3`) + `sqlite-vec`.
+- **Local Storage Only**: Database stored at `~/Library/Application Support/mini-me/mini-me.db` with strict `0600` permissions.
+- **Secret Redaction**: Pre-indexing regex and entropy scanners purge API tokens, SSH keys, and sensitive patterns.
+- **Local Embeddings**: Integrates with local [Ollama](https://ollama.com) (`nomic-embed-text`) at `http://127.0.0.1:11434`.
+
+---
+
+## 📄 License
 
 MIT License.
